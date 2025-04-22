@@ -49,7 +49,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const lastBeverage = beverages[beverages.length - 1];
         const newBeverage = lastBeverage.cloneNode(true);
 
-        // Сбросить значения формы
         newBeverage.querySelectorAll('input').forEach(el => {
             if (el.type === 'radio') {
                 el.checked = el.defaultChecked;
@@ -59,9 +58,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         newBeverage.querySelector('select').selectedIndex = 0;
 
-        newBeverage.style.position = 'relative';
+        const textarea = newBeverage.querySelector('textarea');
+        if (textarea) textarea.value = '';
 
-        // Заменить старую кнопку удаления
         const oldDelete = newBeverage.querySelector('.delete-button');
         if (oldDelete) oldDelete.remove();
         newBeverage.appendChild(createDeleteButton());
@@ -104,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const modal = document.createElement('div');
         modal.style.cssText = `
             background: white;
-            width: 600px;
+            width: 700px;
             padding: 20px;
             border-radius: 10px;
             position: relative;
@@ -134,13 +133,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const table = document.createElement('table');
         table.style.width = '100%';
         table.style.borderCollapse = 'collapse';
+        table.style.marginBottom = '20px';
 
         const thead = document.createElement('thead');
         thead.innerHTML = `
             <tr>
-                <th style="border-bottom: 1px solid #ccc; text-align: left;">Напиток</th>
-                <th style="border-bottom: 1px solid #ccc; text-align: left;">Молоко</th>
-                <th style="border-bottom: 1px solid #ccc; text-align: left;">Дополнительно</th>
+                <th style="border-bottom: 1px solid #ccc;">Напиток</th>
+                <th style="border-bottom: 1px solid #ccc;">Молоко</th>
+                <th style="border-bottom: 1px solid #ccc;">Дополнительно</th>
+                <th style="border-bottom: 1px solid #ccc;">Пожелания</th>
             </tr>
         `;
 
@@ -152,12 +153,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const options = Array.from(bev.querySelectorAll('input[type="checkbox"]:checked'))
                 .map(cb => cb.nextElementSibling.textContent.trim())
                 .join(', ');
+            const wishes = bev.querySelector('textarea')?.value.trim() || '';
 
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td style="padding: 5px 10px;">${drink}</td>
-                <td style="padding: 5px 10px;">${milk}</td>
-                <td style="padding: 5px 10px;">${options}</td>
+                <td style="padding: 5px;">${drink}</td>
+                <td style="padding: 5px;">${milk}</td>
+                <td style="padding: 5px;">${options}</td>
+                <td style="padding: 5px;">${wishes}</td>
             `;
             tbody.appendChild(row);
         });
@@ -165,9 +168,59 @@ document.addEventListener('DOMContentLoaded', () => {
         table.appendChild(thead);
         table.appendChild(tbody);
 
+        // Время заказа
+        const timeLabel = document.createElement('label');
+        timeLabel.textContent = 'Выберите время заказа:';
+        timeLabel.style.display = 'block';
+        timeLabel.style.marginBottom = '5px';
+
+        const timeInput = document.createElement('input');
+        timeInput.type = 'time';
+        timeInput.style.cssText = `
+            display: block;
+            margin-bottom: 20px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        `;
+
+        // Кнопка оформления
+        const confirmBtn = document.createElement('button');
+        confirmBtn.textContent = 'Оформить';
+        confirmBtn.style.cssText = `
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: orange;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        `;
+
+        confirmBtn.addEventListener('click', () => {
+            const selectedTime = timeInput.value;
+            if (!selectedTime) return;
+
+            const now = new Date();
+            const [hours, minutes] = selectedTime.split(':').map(Number);
+            const selected = new Date();
+            selected.setHours(hours, minutes, 0, 0);
+
+            if (selected < now) {
+                timeInput.style.borderColor = 'red';
+                alert('Мы не умеем перемещаться во времени. Выберите время позже, чем текущее');
+            } else {
+                overlay.remove();
+            }
+        });
+
         modal.appendChild(closeBtn);
         modal.appendChild(header);
         modal.appendChild(table);
+        modal.appendChild(timeLabel);
+        modal.appendChild(timeInput);
+        modal.appendChild(confirmBtn);
         overlay.appendChild(modal);
         document.body.appendChild(overlay);
     }
@@ -177,8 +230,20 @@ document.addEventListener('DOMContentLoaded', () => {
         showModal();
     });
 
-    // Кнопка удаления у первого напитка
+    // Добавим textarea пожеланий
+    function addWishesTextarea(beverage) {
+        const wishesField = document.createElement('label');
+        wishesField.className = 'field';
+        wishesField.innerHTML = `
+            И ещё вот что:<br/>
+            <textarea rows="2" style="width: 100%; margin-top: 5px;"></textarea>
+        `;
+        beverage.appendChild(wishesField);
+    }
+
+    // Добавить к первому напитку textarea и delete
     const firstBeverage = document.querySelector('.beverage');
+    addWishesTextarea(firstBeverage);
     firstBeverage.appendChild(createDeleteButton());
     updateDeleteButtonsState();
 });
