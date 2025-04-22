@@ -172,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const timeLabel = document.createElement('label');
         timeLabel.textContent = 'Выберите время заказа:';
         timeLabel.style.display = 'block';
-        timeLabel.style.marginBottom = '5px';
+            timeLabel.style.marginBottom = '5px';
 
         const timeInput = document.createElement('input');
         timeInput.type = 'time';
@@ -230,16 +230,50 @@ document.addEventListener('DOMContentLoaded', () => {
         showModal();
     });
 
+    function highlightKeywords(text) {
+        const keywords = ['срочно', 'быстрее', 'побыстрее', 'скорее', 'поскорее', 'очень нужно'];
+        const regex = new RegExp(keywords.join('|'), 'gi');
+        return text.replace(regex, match => `<b>${match}</b>`);
+    }
+
+
     // Добавим textarea пожеланий
     function addWishesTextarea(beverage) {
         const wishesField = document.createElement('label');
         wishesField.className = 'field';
+
+        const textareaId = 'textarea-' + Math.random().toString(36).substring(2, 9);
+        const previewId = 'preview-' + Math.random().toString(36).substring(2, 9);
+
         wishesField.innerHTML = `
-            И ещё вот что:<br/>
-            <textarea rows="2" style="width: 100%; margin-top: 5px;"></textarea>
-        `;
+        И ещё вот что:<br/>
+        <textarea id="${textareaId}" rows="2" style="width: 100%; margin-top: 5px;"></textarea>
+        <div id="${previewId}" style="margin-top: 5px; color: #333; font-size: 14px;"></div>
+    `;
+
         beverage.appendChild(wishesField);
+
+        const textarea = wishesField.querySelector(`#${textareaId}`);
+        const preview = wishesField.querySelector(`#${previewId}`);
+
+        textarea.addEventListener('input', () => {
+            let rawText = textarea.value;
+
+            // Экранируем HTML
+            rawText = rawText.replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+
+            // Применяем твою функцию
+            const highlighted = highlightKeywords(rawText);
+
+            preview.innerHTML = highlighted;
+        });
     }
+
+
+
+
 
     // Добавить к первому напитку textarea и delete
     const firstBeverage = document.querySelector('.beverage');
