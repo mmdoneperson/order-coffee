@@ -71,48 +71,103 @@ document.addEventListener('DOMContentLoaded', () => {
         updateDeleteButtonsState();
     });
 
+    function getDrinkWordForm(n) {
+        const lastDigit = n % 10;
+        const lastTwoDigits = n % 100;
+
+        if (lastDigit === 1 && lastTwoDigits !== 11) {
+            return 'напиток';
+        } else if (lastDigit >= 2 && lastDigit <= 4 && (lastTwoDigits < 10 || lastTwoDigits >= 20)) {
+            return 'напитка';
+        } else {
+            return 'напитков';
+        }
+    }
+
     function showModal() {
+        const beverages = document.querySelectorAll('.beverage');
+        const count = beverages.length;
+        const wordForm = getDrinkWordForm(count);
+
         const overlay = document.createElement('div');
         overlay.style.cssText = `
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw; height: 100vh;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    `;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        `;
 
         const modal = document.createElement('div');
         modal.style.cssText = `
-      background: white;
-      width: 500px;
-      padding: 20px;
-      border-radius: 10px;
-      position: relative;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    `;
+            background: white;
+            width: 600px;
+            padding: 20px;
+            border-radius: 10px;
+            position: relative;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            max-height: 90vh;
+            overflow-y: auto;
+        `;
 
         const closeBtn = document.createElement('button');
         closeBtn.textContent = '✖';
         closeBtn.style.cssText = `
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: transparent;
-      border: none;
-      font-size: 20px;
-      cursor: pointer;
-    `;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: transparent;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+        `;
         closeBtn.addEventListener('click', () => overlay.remove());
 
-        const content = document.createElement('p');
-        content.textContent = 'Заказ принят!';
-        content.style.fontSize = '18px';
+        const header = document.createElement('p');
+        header.textContent = `Вы заказали ${count} ${wordForm}`;
+        header.style.fontSize = '18px';
+        header.style.marginBottom = '20px';
+
+        const table = document.createElement('table');
+        table.style.width = '100%';
+        table.style.borderCollapse = 'collapse';
+
+        const thead = document.createElement('thead');
+        thead.innerHTML = `
+            <tr>
+                <th style="border-bottom: 1px solid #ccc; text-align: left;">Напиток</th>
+                <th style="border-bottom: 1px solid #ccc; text-align: left;">Молоко</th>
+                <th style="border-bottom: 1px solid #ccc; text-align: left;">Дополнительно</th>
+            </tr>
+        `;
+
+        const tbody = document.createElement('tbody');
+
+        beverages.forEach(bev => {
+            const drink = bev.querySelector('select').selectedOptions[0].textContent;
+            const milk = bev.querySelector('input[name="milk"]:checked')?.nextElementSibling?.textContent || '';
+            const options = Array.from(bev.querySelectorAll('input[type="checkbox"]:checked'))
+                .map(cb => cb.nextElementSibling.textContent.trim())
+                .join(', ');
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td style="padding: 5px 10px;">${drink}</td>
+                <td style="padding: 5px 10px;">${milk}</td>
+                <td style="padding: 5px 10px;">${options}</td>
+            `;
+            tbody.appendChild(row);
+        });
+
+        table.appendChild(thead);
+        table.appendChild(tbody);
 
         modal.appendChild(closeBtn);
-        modal.appendChild(content);
+        modal.appendChild(header);
+        modal.appendChild(table);
         overlay.appendChild(modal);
         document.body.appendChild(overlay);
     }
